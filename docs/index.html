@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Shortest Path Visualizer</title>
+    <link rel="icon" type="image/png" href="JMTS.png">
+    <link rel="shortcut icon" type="image/png" href="JMTS.png">
+    <link rel="apple-touch-icon" href="JMTS.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2d5aa0 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        .left-panel {
+            width: 50%;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            width: 50%;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .section h3 {
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-row label {
+            font-weight: 500;
+            color: #555;
+            min-width: 120px;
+        }
+
+        input, select, button {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        /* Remove number input spinners */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2d5aa0;
+            box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #1a365d 0%, #2d5aa0 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 90, 160, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .node-table {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .node-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .node-table th, .node-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .node-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .node-table input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .matrix-container {
+            max-height: 350px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: max-content;
+        }
+
+        .matrix-table th, .matrix-table td {
+            padding: 4px;
+            text-align: center;
+            border: 1px solid #ddd;
+            min-width: 60px;
+        }
+
+        .matrix-table th {
+            background: #f0f8ff;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .matrix-table th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background: #f0f8ff;
+        }
+
+        .matrix-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: #f5f5f5;
+            font-weight: 600;
+            z-index: 9;
+        }
+
+        .matrix-table input {
+            width: 50px;
+            padding: 2px 4px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .matrix-table input:disabled {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .canvas-container {
+            max-height: 500px;
+            overflow: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex; /* Use flexbox to center canvas and zoom controls */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas {
+            display: block;
+            background: white;
+            flex-grow: 1; /* Allow canvas to take available space */
+            max-width: 100%; /* Ensure canvas doesn't overflow */
+            max-height: 100%;
+        }
+
+        .zoom-controls {
+            width: 80%; /* Adjust width of the slider */
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .zoom-controls label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .zoom-controls input[type="range"] {
+            flex-grow: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .zoom-controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2d5aa0;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .zoom-controls input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2d5aa0;
+            cursor: grab;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .result-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .result-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-content h3 {
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+
+        .result-content p {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .close-btn {
+            background: #dc3545;
+            margin-top: 15px;
+        }
+
+        .close-btn:hover {
+            background: #c82333;
+        }
+
+        /* Logo Section */
+        .logo-section {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .logo-section img {
+            max-width: 200px;
+            height: auto;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+
+            .input-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Network Shortest Path Visualizer</h1>
+            <p>JMTS_2404 | <a href="https://github.com/Yunqing-Jia" style="color: #00BFFF;">Yunqing Jia</a> </p>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="section">
+                    <h3>Problem Definition</h3>
+                    <div class="input-row">
+                        <label>Number of nodes (≥2):</label>
+                        <input type="number" id="numNodes" min="2" max="50" value="5">
+                        <button onclick="definePoints()">Define Points</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Node Information</h3>
+                    <div class="node-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>X</th>
+                                    <th>Y</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nodeTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Distance Matrix</h3>
+                    <div class="matrix-container">
+                        <table class="matrix-table" id="matrixTable">
+                        </table>
+                    </div>
+                    <button onclick="defineNetwork()" style="margin-top: 10px;">Define Network</button>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="controls">
+                    <label>Start:</label>
+                    <select id="startNode"></select>
+
+                    <label>End:</label>
+                    <select id="endNode"></select>
+
+                    <label>Algorithm:</label>
+                    <select id="algorithm">
+                        <option value="dijkstra">Dijkstra</option>
+                        <option value="bfs">BFS</option>
+                    </select>
+
+                    <button onclick="calculateShortestPath()">Calculate Shortest Path</button>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="canvas" width="800" height="600"></canvas>
+                    <div class="zoom-controls">
+                        <label>Zoom:</label>
+                        <input type="range" id="zoomSlider" min="0.5" max="2.0" step="0.05" value="1.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logo-section">
+            <img src="J-MTS.png" alt="JMTS Logo">
+        </div>
+    </div>
+
+    <div class="result-popup" id="resultPopup">
+        <div class="result-content">
+            <h3>Shortest Path Result</h3>
+            <div id="resultText"></div>
+            <button class="close-btn" onclick="closeResult()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        class NetworkVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.zoomSlider = document.getElementById('zoomSlider');
+                this.nodes = {};
+                this.distanceMatrix = [];
+                this.numNodes = 0;
+                this.shortestPath = [];
+                this.nodeRadius = 20;
+                this.margin = 80; // Margin for coordinate axes
+                this.currentZoom = 1.0; // Initial zoom level
+
+                this.definePoints();
+
+                // Add event listener for zoom slider
+                this.zoomSlider.addEventListener('input', () => {
+                    this.currentZoom = parseFloat(this.zoomSlider.value);
+                    this.drawNetwork();
+                });
+            }
+
+            generateNodeName(index) {
+                if (index < 26) {
+                    return String.fromCharCode(65 + index);
+                } else if (index < 702) { // 26 + 26*26
+                    const first = String.fromCharCode(65 + Math.floor((index - 26) / 26));
+                    const second = String.fromCharCode(65 + (index - 26) % 26);
+                    return first + second;
+                } else {
+                    // For even more nodes, use three letters
+                    const remaining = index - 702;
+                    const first = String.fromCharCode(65 + Math.floor(remaining / 676));
+                    const second = String.fromCharCode(65 + Math.floor((remaining % 676) / 26));
+                    const third = String.fromCharCode(65 + (remaining % 26));
+                    return first + second + third;
+                }
+            }
+
+            definePoints() {
+                const numNodes = parseInt(document.getElementById('numNodes').value);
+                if (numNodes < 2) {
+                    alert('Number of nodes must be ≥ 2');
+                    return;
+                }
+
+                if (numNodes > 50) {
+                    alert('For performance reasons, maximum 50 nodes are recommended');
+                    return;
+                }
+
+                this.numNodes = numNodes;
+                this.nodes = {};
+
+                // Generate nodes with initial coordinates (1,1), (2,2), ..., (n,n)
+                for (let i = 0; i < numNodes; i++) {
+                    const nodeId = this.generateNodeName(i);
+                    const coordValue = i + 1; // Coordinates start from 1
+
+                    this.nodes[nodeId] = {
+                        name: nodeId,
+                        x: coordValue, // Directly use as the coordinate
+                        y: coordValue  // Directly use as the coordinate
+                    };
+                }
+
+                // Initialize distance matrix
+                this.distanceMatrix = Array(numNodes).fill().map(() => Array(numNodes).fill(Infinity));
+                for (let i = 0; i < numNodes; i++) {
+                    this.distanceMatrix[i][i] = 0;
+                }
+
+                this.updateNodeTable();
+                this.createMatrixTable();
+                this.updateComboBoxes();
+                this.drawNetwork(); // Initial draw
+            }
+
+            updateNodeTable() {
+                const tbody = document.getElementById('nodeTable');
+                tbody.innerHTML = '';
+
+                Object.keys(this.nodes).forEach(nodeId => {
+                    const row = tbody.insertRow();
+                    const node = this.nodes[nodeId];
+
+                    row.insertCell(0).textContent = nodeId;
+
+                    const nameCell = row.insertCell(1);
+                    const nameInput = document.createElement('input');
+                    nameInput.value = node.name;
+                    nameInput.addEventListener('change', (e) => {
+                        this.nodes[nodeId].name = e.target.value;
+                        this.updateComboBoxes();
+                        this.drawNetwork(); // Redraw to update node labels
+                    });
+                    nameCell.appendChild(nameInput);
+
+                    const xCell = row.insertCell(2);
+                    const xInput = document.createElement('input');
+                    xInput.type = 'number';
+                    xInput.value = node.x; // Use node.x directly
+                    xInput.addEventListener('change', (e) => {
+                        const newX = parseFloat(e.target.value);
+                        if (isNaN(newX)) {
+                            alert('X coordinate must be a number.');
+                            e.target.value = node.x; // Revert to old value
+                            return;
+                        }
+                        this.nodes[nodeId].x = newX; // Update node.x directly
+                        this.drawNetwork();
+                    });
+                    xCell.appendChild(xInput);
+
+                    const yCell = row.insertCell(3);
+                    const yInput = document.createElement('input');
+                    yInput.type = 'number';
+                    yInput.value = node.y; // Use node.y directly
+                    yInput.addEventListener('change', (e) => {
+                        const newY = parseFloat(e.target.value);
+                        if (isNaN(newY)) {
+                            alert('Y coordinate must be a number.');
+                            e.target.value = node.y; // Revert to old value
+                            return;
+                        }
+                        this.nodes[nodeId].y = newY; // Update node.y directly
+                        this.drawNetwork();
+                    });
+                    yCell.appendChild(yInput);
+                });
+            }
+
+            getScaleFactor() {
+                // Calculate scale factor based on current coordinate range
+                const xs = Object.values(this.nodes).map(n => n.x);
+                const ys = Object.values(this.nodes).map(n => n.y);
+
+                const minX = xs.length > 0 ? Math.min(...xs) : 0;
+                const maxX = xs.length > 0 ? Math.max(...xs) : (this.numNodes > 0 ? this.numNodes : 1);
+                const minY = ys.length > 0 ? Math.min(...ys) : 0;
+                const maxY = ys.length > 0 ? Math.max(...ys) : (this.numNodes > 0 ? this.numNodes : 1);
+
+                // Add a small buffer to max/min in case all points are on the same line/point
+                const rangeX = (maxX - minX) === 0 ? 1 : (maxX - minX);
+                const rangeY = (maxY - minY) === 0 ? 1 : (maxY - minY);
+
+                const availableWidth = this.canvas.width - 2 * this.margin - 20; // 20 for axis label space
+                const availableHeight = this.canvas.height - 2 * this.margin - 20;
+
+                let scaleX = availableWidth / rangeX;
+                let scaleY = availableHeight / rangeY;
+
+                // Ensure a minimum scale so nodes are not too tiny
+                scaleX = Math.max(scaleX, 30);
+                scaleY = Math.max(scaleY, 30);
+
+                return Math.min(scaleX, scaleY) * this.currentZoom; // Apply current zoom level
+            }
+
+            getOffsetCoords(node) {
+                // Determine min coordinates to offset everything positively on canvas
+                const xs = Object.values(this.nodes).map(n => n.x);
+                const ys = Object.values(this.nodes).map(n => n.y);
+                const minX = xs.length > 0 ? Math.min(...xs) : 0;
+                const minY = ys.length > 0 ? Math.min(...ys) : 0;
+
+                const scaleFactor = this.getScaleFactor();
+
+                // Map the node's x, y directly to canvas coordinates with scaling and offset
+                return {
+                    canvasX: this.margin + (node.x - minX) * scaleFactor,
+                    canvasY: this.canvas.height - this.margin - (node.y - minY) * scaleFactor
+                };
+            }
+
+            createMatrixTable() {
+                const table = document.getElementById('matrixTable');
+                table.innerHTML = '';
+
+                const nodeIds = Object.keys(this.nodes);
+
+                // Header row
+                const headerRow = table.insertRow();
+                headerRow.insertCell(0).innerHTML = '<strong>From\\To</strong>';
+                nodeIds.forEach(nodeId => {
+                    const cell = headerRow.insertCell();
+                    cell.innerHTML = `<strong>${nodeId}</strong>`;
+                });
+
+                // Data rows
+                nodeIds.forEach((fromNodeId, i) => {
+                    const row = table.insertRow();
+                    const headerCell = row.insertCell(0);
+                    headerCell.innerHTML = `<strong>${fromNodeId}</strong>`;
+
+                    nodeIds.forEach((toNodeId, j) => {
+                        const cell = row.insertCell();
+                        const input = document.createElement('input');
+                        input.type = 'text';
+
+                        if (i === j) {
+                            input.value = '0';
+                            input.disabled = true;
+                        } else {
+                            input.value = this.distanceMatrix[i][j] === Infinity ? 'inf' : this.distanceMatrix[i][j];
+                            input.addEventListener('change', (e) => {
+                                this.updateMatrixValue(i, j, e.target.value);
+                            });
+                        }
+
+                        cell.appendChild(input);
+                    });
+                });
+            }
+
+            updateMatrixValue(row, col, value) {
+                if (value.toLowerCase() === 'inf' || value === '') {
+                    this.distanceMatrix[row][col] = Infinity;
+                } else {
+                    const numValue = parseFloat(value);
+                    if (isNaN(numValue) || numValue <= 0) {
+                        alert('Distance must be a positive number');
+                        // Revert to the previous value or 'inf' if it was not a valid number
+                        const currentInput = document.getElementById('matrixTable').rows[row + 1].cells[col + 1].querySelector('input');
+                        currentInput.value = this.distanceMatrix[row][col] === Infinity ? 'inf' : this.distanceMatrix[row][col];
+                        return; // Prevent updating with invalid value
+                    } else {
+                        this.distanceMatrix[row][col] = numValue;
+                    }
+                }
+                this.drawNetwork();
+            }
+
+            updateComboBoxes() {
+                const startSelect = document.getElementById('startNode');
+                const endSelect = document.getElementById('endNode');
+
+                startSelect.innerHTML = '';
+                endSelect.innerHTML = '';
+
+                Object.values(this.nodes).forEach(node => {
+                    const startOption = document.createElement('option');
+                    startOption.value = node.name;
+                    startOption.textContent = node.name;
+                    startSelect.appendChild(startOption);
+
+                    const endOption = document.createElement('option');
+                    endOption.value = node.name;
+                    endOption.textContent = node.name;
+                    endSelect.appendChild(endOption);
+                });
+
+                if (Object.keys(this.nodes).length > 1) {
+                    endSelect.selectedIndex = 1;
+                }
+            }
+
+            drawCoordinateAxes() {
+                const ctx = this.ctx;
+
+                const xs = Object.values(this.nodes).map(n => n.x);
+                const ys = Object.values(this.nodes).map(n => n.y);
+
+                const minX = xs.length > 0 ? Math.min(...xs) : 0;
+                const maxX = xs.length > 0 ? Math.max(...xs) : (this.numNodes > 0 ? this.numNodes : 1);
+                const minY = ys.length > 0 ? Math.min(...ys) : 0;
+                const maxY = ys.length > 0 ? Math.max(...ys) : (this.numNodes > 0 ? this.numNodes : 1);
+
+                const scaleFactor = this.getScaleFactor();
+
+                // Draw axes
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2 / this.currentZoom; // Scale line width with zoom
+                ctx.font = `${12 / this.currentZoom}px Arial`; // Scale font size with zoom
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+
+                // X-axis
+                ctx.beginPath();
+                ctx.moveTo(this.margin, this.canvas.height - this.margin);
+                ctx.lineTo(this.canvas.width - 20, this.canvas.height - this.margin);
+                ctx.stroke();
+
+                // Y-axis
+                ctx.beginPath();
+                ctx.moveTo(this.margin, this.canvas.height - this.margin);
+                ctx.lineTo(this.margin, 20);
+                ctx.stroke();
+
+                // Determine appropriate tick interval
+                const desiredTickCount = 10;
+                let tickIntervalX = Math.max(1, Math.ceil((maxX - minX + 1) / desiredTickCount));
+                let tickIntervalY = Math.max(1, Math.ceil((maxY - minY + 1) / desiredTickCount));
+
+                // Adjust tick interval if it's too fine for the scale
+                if (scaleFactor * tickIntervalX < 30 / this.currentZoom && tickIntervalX < (maxX - minX + 1)) {
+                    tickIntervalX = Math.max(1, Math.ceil(30 / (scaleFactor / this.currentZoom)));
+                }
+                 if (scaleFactor * tickIntervalY < 30 / this.currentZoom && tickIntervalY < (maxY - minY + 1)) {
+                    tickIntervalY = Math.max(1, Math.ceil(30 / (scaleFactor / this.currentZoom)));
+                }
+
+                // X-axis ticks and labels
+                for (let x = Math.floor(minX); x <= Math.ceil(maxX); x += tickIntervalX) {
+                    const canvasX = this.margin + (x - minX) * scaleFactor;
+                    if (canvasX >= this.margin && canvasX <= this.canvas.width - 20) {
+                        ctx.beginPath();
+                        ctx.moveTo(canvasX, this.canvas.height - this.margin - (5 / this.currentZoom));
+                        ctx.lineTo(canvasX, this.canvas.height - this.margin + (5 / this.currentZoom));
+                        ctx.stroke();
+
+                        ctx.fillText(x.toString(), canvasX, this.canvas.height - this.margin + (8 / this.currentZoom));
+                    }
+                }
+
+                // Y-axis ticks and labels
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                for (let y = Math.floor(minY); y <= Math.ceil(maxY); y += tickIntervalY) {
+                    const canvasY = this.canvas.height - this.margin - (y - minY) * scaleFactor;
+                    if (canvasY >= 20 && canvasY <= this.canvas.height - this.margin) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.margin - (5 / this.currentZoom), canvasY);
+                        ctx.lineTo(this.margin + (5 / this.currentZoom), canvasY);
+                        ctx.stroke();
+
+                        ctx.fillText(y.toString(), this.margin - (8 / this.currentZoom), canvasY);
+                    }
+                }
+
+                // Axis labels
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.font = `bold ${14 / this.currentZoom}px Arial`; // Scale font size with zoom
+                ctx.fillText('X', this.canvas.width - (10 / this.currentZoom), this.canvas.height - this.margin + (20 / this.currentZoom));
+
+                ctx.save();
+                ctx.translate((20 / this.currentZoom), this.canvas.height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Y', 0, 0);
+                ctx.restore();
+            }
+
+            drawNetwork() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw coordinate axes
+                this.drawCoordinateAxes();
+
+                // Draw light grid
+                const scaleFactor = this.getScaleFactor();
+                const xs = Object.values(this.nodes).map(n => n.x);
+                const ys = Object.values(this.nodes).map(n => n.y);
+
+                const minX = xs.length > 0 ? Math.min(...xs) : 0;
+                const maxX = xs.length > 0 ? Math.max(...xs) : (this.numNodes > 0 ? this.numNodes : 1);
+                const minY = ys.length > 0 ? Math.min(...ys) : 0;
+                const maxY = ys.length > 0 ? Math.max(...ys) : (this.numNodes > 0 ? this.numNodes : 1);
+
+                ctx.strokeStyle = '#f0f0f0';
+                ctx.lineWidth = 1 / this.currentZoom; // Scale line width with zoom
+
+                // Vertical grid lines
+                for (let x = Math.floor(minX); x <= Math.ceil(maxX); x++) {
+                    const canvasX = this.margin + (x - minX) * scaleFactor;
+                    if (canvasX > this.margin && canvasX < this.canvas.width - 20) { // Avoid drawing over axes
+                        ctx.beginPath();
+                        ctx.moveTo(canvasX, this.margin);
+                        ctx.lineTo(canvasX, this.canvas.height - this.margin);
+                        ctx.stroke();
+                    }
+                }
+
+                // Horizontal grid lines
+                for (let y = Math.floor(minY); y <= Math.ceil(maxY); y++) {
+                    const canvasY = this.canvas.height - this.margin - (y - minY) * scaleFactor;
+                     if (canvasY > 20 && canvasY < this.canvas.height - this.margin) { // Avoid drawing over axes
+                        ctx.beginPath();
+                        ctx.moveTo(this.margin, canvasY);
+                        ctx.lineTo(this.canvas.width - 20, canvasY);
+                        ctx.stroke();
+                    }
+                }
+
+                const nodeIds = Object.keys(this.nodes);
+
+                // Draw edges
+                nodeIds.forEach((fromNodeId, i) => {
+                    nodeIds.forEach((toNodeId, j) => {
+                        if (i !== j && this.distanceMatrix[i][j] !== Infinity) {
+                            const fromNode = this.nodes[fromNodeId];
+                            const toNode = this.nodes[toNodeId];
+
+                            const isShortestPath = this.isEdgeInShortestPath(fromNodeId, toNodeId);
+
+                            this.drawEdge(fromNode, toNode, this.distanceMatrix[i][j], isShortestPath);
+                        }
+                    });
+                });
+
+                // Draw nodes
+                Object.values(this.nodes).forEach(node => {
+                    this.drawNode(node);
+                });
+            }
+
+            drawEdge(fromNode, toNode, weight, isShortestPath) {
+                const ctx = this.ctx;
+                const scaleFactor = this.getScaleFactor();
+
+                const startCanvasCoords = this.getOffsetCoords(fromNode);
+                const endCanvasCoords = this.getOffsetCoords(toNode);
+
+                const dx = endCanvasCoords.canvasX - startCanvasCoords.canvasX;
+                const dy = endCanvasCoords.canvasY - startCanvasCoords.canvasY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance === 0) return;
+
+                const unitX = dx / distance;
+                const unitY = dy / distance;
+
+                // Adjust nodeRadius by zoom for proper spacing
+                const currentRadius = this.nodeRadius / this.currentZoom;
+
+                const startX = startCanvasCoords.canvasX + unitX * currentRadius;
+                const startY = startCanvasCoords.canvasY + unitY * currentRadius;
+                const endX = endCanvasCoords.canvasX - unitX * currentRadius;
+                const endY = endCanvasCoords.canvasY - unitY * currentRadius;
+
+                // Draw curved line - adjusted for zoom and slight curve
+                const curveOffset = 0.5;// * scaleFactor; // Smaller curve offset
+                const controlX = (startX + endX) / 2 + (endY - startY) * curveOffset;
+                const controlY = (startY + endY) / 2 + (startX - endX) * curveOffset;
+
+                ctx.strokeStyle = isShortestPath ? '#1a365d' : '#333';
+                ctx.lineWidth = (isShortestPath ? 3 : 1) / this.currentZoom; // Scale line width with zoom
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+                ctx.stroke();
+
+                // Draw arrowhead
+                const arrowSize = 10 / this.currentZoom; // Scale arrow size with zoom
+                const arrowPointT = 0.99; // A point very close to the end of the curve (0 to 1)
+
+                // Calculate the point on the curve where the arrow tip will be
+                // Using the quadratic Bezier formula: B(t) = (1-t)^2 P0 + 2(1-t)t P1 + t^2 P2
+                // Here P0 = (startX, startY), P1 = (controlX, controlY), P2 = (endX, endY)
+                const tipX = Math.pow(1 - arrowPointT, 2) * startX + 2 * (1 - arrowPointT) * arrowPointT * controlX + Math.pow(arrowPointT, 2) * endX;
+                const tipY = Math.pow(1 - arrowPointT, 2) * startY + 2 * (1 - arrowPointT) * arrowPointT * controlY + Math.pow(arrowPointT, 2) * endY;
+
+                // Calculate the tangent vector at that point (derivative of Bezier curve)
+                // B'(t) = 2(1-t)(P1 - P0) + 2t(P2 - P1)
+                const tangentX = 2 * (1 - arrowPointT) * (controlX - startX) + 2 * arrowPointT * (endX - controlX);
+                const tangentY = 2 * (1 - arrowPointT) * (controlY - startY) + 2 * arrowPointT * (endY - controlY);
+
+                const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                let arrowDirX = tangentX / tangentLength;
+                let arrowDirY = tangentY / tangentLength;
+
+                // Calculate the angle of the tangent
+                const angle = Math.atan2(arrowDirY, arrowDirX);
+
+                ctx.fillStyle = isShortestPath ? '#1a365d' : '#333';
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(
+                    tipX - arrowSize * Math.cos(angle - Math.PI / 6),
+                    tipY - arrowSize * Math.sin(angle - Math.PI / 6)
+                );
+                ctx.lineTo(
+                    tipX - arrowSize * Math.cos(angle + Math.PI / 6),
+                    tipY - arrowSize * Math.sin(angle + Math.PI / 6)
+                );
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw weight label - positioned to the right of the arrow direction
+                const labelOffsetAmount = 0.25 * currentRadius; // Offset by 0.25 of the current node radius
+
+                // Midpoint of the curved line
+                const curveMidX = (startX + 2 * controlX + endX) / 4;
+                const curveMidY = (startY + 2 * controlY + endY) / 4;
+
+                // Perpendicular vector for offset (unitY, -unitX) for right side
+                const labelX = curveMidX + unitY * labelOffsetAmount;
+                const labelY = curveMidY - unitX * labelOffsetAmount;
+
+
+                ctx.fillStyle = 'white';
+                // Adjust rect size for zoom
+                const rectWidth = 30 / this.currentZoom;
+                const rectHeight = 16 / this.currentZoom;
+                ctx.fillRect(labelX - rectWidth / 2, labelY - rectHeight / 2, rectWidth, rectHeight);
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1 / this.currentZoom; // Scale line width with zoom
+                ctx.strokeRect(labelX - rectWidth / 2, labelY - rectHeight / 2, rectWidth, rectHeight);
+
+                ctx.fillStyle = isShortestPath ? '#1a365d' : '#333';
+                ctx.font = `${12 / this.currentZoom}px Arial`; // Scale font size with zoom
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(weight.toFixed(1), labelX, labelY);
+            }
+
+            drawNode(node) {
+                const ctx = this.ctx;
+                const canvasCoords = this.getOffsetCoords(node);
+
+                // Adjust nodeRadius by zoom
+                const currentRadius = this.nodeRadius / this.currentZoom;
+
+                // Draw node circle
+                ctx.fillStyle = '#e3f2fd';
+                ctx.strokeStyle = '#1a365d';
+                ctx.lineWidth = 2 / this.currentZoom; // Scale line width with zoom
+
+                ctx.beginPath();
+                ctx.arc(canvasCoords.canvasX, canvasCoords.canvasY, currentRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw node label using NAME
+                ctx.fillStyle = '#1a365d';
+                ctx.font = `bold ${14 / this.currentZoom}px Arial`; // Scale font size with zoom
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.name, canvasCoords.canvasX, canvasCoords.canvasY);
+            }
+
+            isEdgeInShortestPath(fromNodeId, toNodeId) {
+                if (!this.shortestPath || this.shortestPath.length < 2) {
+                    return false;
+                }
+                for (let i = 0; i < this.shortestPath.length - 1; i++) {
+                    if (this.shortestPath[i] === fromNodeId && this.shortestPath[i + 1] === toNodeId) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            defineNetwork() {
+                // This function is mainly for redrawing the network after matrix changes
+                this.drawNetwork();
+                alert('Network defined. You can now calculate shortest paths.');
+            }
+
+            calculateShortestPath() {
+                const startNodeName = document.getElementById('startNode').value;
+                const endNodeName = document.getElementById('endNode').value;
+                const algorithm = document.getElementById('algorithm').value;
+
+                if (!startNodeName || !endNodeName) {
+                    alert('Please select both start and end nodes.');
+                    return;
+                }
+                if (startNodeName === endNodeName) {
+                    alert('Start and end nodes cannot be the same.');
+                    return;
+                }
+
+                const nodeNames = Object.keys(this.nodes);
+                const startIndex = nodeNames.indexOf(startNodeName);
+                const endIndex = nodeNames.indexOf(endNodeName);
+
+                if (startIndex === -1 || endIndex === -1) {
+                    alert('Selected start or end node not found in the network.');
+                    return;
+                }
+
+                let path, distance;
+
+                if (algorithm === 'dijkstra') {
+                    ({ path, distance } = this.dijkstra(startIndex, endIndex));
+                } else if (algorithm === 'bfs') {
+                    ({ path, distance } = this.bfs(startIndex, endIndex));
+                }
+
+                this.shortestPath = path.map(index => nodeNames[index]);
+                this.drawNetwork(); // Redraw with shortest path highlighted
+
+                this.showResult(this.shortestPath, distance);
+            }
+
+            dijkstra(startIndex, endIndex) {
+                const numNodes = this.numNodes;
+                const dist = Array(numNodes).fill(Infinity);
+                const prev = Array(numNodes).fill(null);
+                const visited = Array(numNodes).fill(false);
+
+                dist[startIndex] = 0;
+
+                for (let i = 0; i < numNodes; i++) {
+                    let minDist = Infinity;
+                    let u = -1;
+
+                    // Find unvisited node with smallest distance
+                    for (let v = 0; v < numNodes; v++) {
+                        if (!visited[v] && dist[v] < minDist) {
+                            minDist = dist[v];
+                            u = v;
+                        }
+                    }
+
+                    if (u === -1) break; // No reachable unvisited nodes
+                    visited[u] = true;
+
+                    // Update distances to neighbors
+                    for (let v = 0; v < numNodes; v++) {
+                        if (!visited[v] && this.distanceMatrix[u][v] !== Infinity) {
+                            const newDist = dist[u] + this.distanceMatrix[u][v];
+                            if (newDist < dist[v]) {
+                                dist[v] = newDist;
+                                prev[v] = u;
+                            }
+                        }
+                    }
+                }
+
+                const path = [];
+                let currentNode = endIndex;
+                while (currentNode !== null) {
+                    path.unshift(currentNode);
+                    currentNode = prev[currentNode];
+                }
+
+                if (path[0] !== startIndex) { // Path not found
+                    return { path: [], distance: Infinity };
+                }
+
+                return { path: path, distance: dist[endIndex] };
+            }
+
+            bfs(startIndex, endIndex) {
+                const numNodes = this.numNodes;
+                const queue = [];
+                const visited = Array(numNodes).fill(false);
+                const parent = Array(numNodes).fill(null);
+                const distance = Array(numNodes).fill(0); // For BFS, distance is number of edges
+
+                queue.push(startIndex);
+                visited[startIndex] = true;
+
+                let head = 0;
+                while (head < queue.length) {
+                    const u = queue[head++];
+
+                    if (u === endIndex) break; // Found the end node
+
+                    for (let v = 0; v < numNodes; v++) {
+                        // For BFS, we consider an edge if distance is not Infinity (i.e., there's a connection)
+                        // and it's a positive weight for a valid path.
+                        // If we strictly want unweighted shortest path, we'd only check this.distanceMatrix[u][v] !== Infinity
+                        // For this visualizer, assuming BFS for unweighted/equal weight paths.
+                        if (!visited[v] && this.distanceMatrix[u][v] !== Infinity && this.distanceMatrix[u][v] > 0) {
+                            visited[v] = true;
+                            parent[v] = u;
+                            distance[v] = distance[u] + 1; // Increment distance by 1 for each hop
+                            queue.push(v);
+                        }
+                    }
+                }
+
+                const path = [];
+                let currentNode = endIndex;
+                if (!visited[endIndex]) { // Path not found
+                    return { path: [], distance: Infinity };
+                }
+                while (currentNode !== null) {
+                    path.unshift(currentNode);
+                    currentNode = parent[currentNode];
+                }
+
+                return { path: path, distance: distance[endIndex] };
+            }
+
+            showResult(path, distance) {
+                const resultPopup = document.getElementById('resultPopup');
+                const resultText = document.getElementById('resultText');
+
+                if (distance === Infinity) {
+                    resultText.innerHTML = '<p>No path found between the selected nodes.</p>';
+                } else {
+                    const pathNames = path.map(index => {
+                        const nodeIds = Object.keys(this.nodes);
+                        return this.nodes[nodeIds[index]].name;
+                    });
+                    resultText.innerHTML = `
+                        <p><strong>Path:</strong> ${pathNames.join(' &rarr; ')}</p>
+                        <p><strong>Total Distance:</strong> ${distance.toFixed(2)}</p>
+                    `;
+                }
+                resultPopup.style.display = 'flex';
+            }
+
+            closeResult() {
+                this.shortestPath = []; // Clear shortest path highlight
+                this.drawNetwork(); // Redraw without highlight
+                document.getElementById('resultPopup').style.display = 'none';
+            }
+        }
+
+        let visualizer;
+        window.onload = () => {
+            visualizer = new NetworkVisualizer();
+            // Attach global functions to window for onclick attributes
+            window.definePoints = () => visualizer.definePoints();
+            window.defineNetwork = () => visualizer.defineNetwork();
+            window.calculateShortestPath = () => visualizer.calculateShortestPath();
+            window.closeResult = () => visualizer.closeResult();
+        };
+    </script>
+</body>
+</html>
