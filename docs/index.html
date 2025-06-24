@@ -1024,42 +1024,60 @@
                 alert('Network defined. You can now calculate shortest paths.');
             }
 
-            calculateShortestPath() {
-                const startNodeName = document.getElementById('startNode').value;
-                const endNodeName = document.getElementById('endNode').value;
-                const algorithm = document.getElementById('algorithm').value;
 
-                if (!startNodeName || !endNodeName) {
-                    alert('Please select both start and end nodes.');
-                    return;
-                }
-                if (startNodeName === endNodeName) {
-                    alert('Start and end nodes cannot be the same.');
-                    return;
-                }
+calculateShortestPath() {
+    const startNodeName = document.getElementById('startNode').value;
+    const endNodeName = document.getElementById('endNode').value;
+    const algorithm = document.getElementById('algorithm').value;
 
-                const nodeNames = Object.keys(this.nodes);
-                const startIndex = nodeNames.indexOf(startNodeName);
-                const endIndex = nodeNames.indexOf(endNodeName);
+    if (!startNodeName || !endNodeName) {
+        alert('Please select both start and end nodes.');
+        return;
+    }
 
-                if (startIndex === -1 || endIndex === -1) {
-                    alert('Selected start or end node not found in the network.');
-                    return;
-                }
+    if (startNodeName === endNodeName) {
+        alert('Start and end nodes cannot be the same.');
+        return;
+    }
 
-                let path, distance;
+    const nodeIds = Object.keys(this.nodes);
+    let startNodeId = null;
+    let endNodeId = null;
 
-                if (algorithm === 'dijkstra') {
-                    ({ path, distance } = this.dijkstra(startIndex, endIndex));
-                } else if (algorithm === 'bfs') {
-                    ({ path, distance } = this.bfs(startIndex, endIndex));
-                }
+    for (const nodeId of nodeIds) {
+        if (this.nodes[nodeId].name === startNodeName) {
+            startNodeId = nodeId;
+            break;
+        }
+    }
 
-                this.shortestPath = path.map(index => nodeNames[index]);
-                this.drawNetwork(); // Redraw with shortest path highlighted
+    for (const nodeId of nodeIds) {
+        if (this.nodes[nodeId].name === endNodeName) {
+            endNodeId = nodeId;
+            break;
+        }
+    }
 
-                this.showResult(this.shortestPath, distance);
-            }
+    if (!startNodeId || !endNodeId) {
+        alert('Selected start or end node not found in the network.');
+        return;
+    }
+
+    const startIndex = nodeIds.indexOf(startNodeId);
+    const endIndex = nodeIds.indexOf(endNodeId);
+
+    let path, distance;
+    if (algorithm === 'dijkstra') {
+        ({ path, distance } = this.dijkstra(startIndex, endIndex));
+    } else if (algorithm === 'bfs') {
+        ({ path, distance } = this.bfs(startIndex, endIndex));
+    }
+
+    this.shortestPath = path.map(index => nodeIds[index]);
+    this.drawNetwork(); // Redraw with shortest path highlighted
+    this.showResult(this.shortestPath, distance);
+}
+
 
             dijkstra(startIndex, endIndex) {
                 const numNodes = this.numNodes;
